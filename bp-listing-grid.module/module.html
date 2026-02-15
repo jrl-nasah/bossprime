@@ -1,0 +1,284 @@
+<!-- bp-listing-grid / module.html -->
+<section class="bp-listing-grid"
+  style="
+    --cols-d: {{ module.configura_es_gerais.columns_desktop|default(3) }};
+    --cols-t: {{ module.configura_es_gerais.columns_tablet|default(2) }};
+    --cols-m: {{ module.configura_es_gerais.columns_mobile|default(1) }};
+    --gap: {{ module.configura_es_gerais.gap_px|default(16) }}px;
+  "
+>
+  {% set _show_section = module.configura_es_gerais.show_section|default(true) %}
+  {% set _title_txt = module.configura_es_gerais.section_title|default('Imóveis em destaque') %}
+  {% if _show_section %}
+    <header class="bp-listing-grid__head" data-head>
+      <h2 class="bp-listing-grid__title">{{ _title_txt }}</h2>
+      <button class="bp-filters__toggle"
+              type="button"
+              data-filter-toggle
+              aria-label="Exibir filtros"
+              aria-expanded="false"
+              aria-controls="bp-filters-panel">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20l-6-6zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <span class="bp-filters__badge" data-count hidden></span>
+      </button>
+    </header>
+
+    <div class="bp-filters" id="bp-filters-panel" data-filters hidden>
+      <div class="bp-filters__chips" data-filter-chips aria-label="Filtros de selos"></div>
+      <button class="bp-filters__clear" type="button" data-filter-clear hidden>Limpar filtros</button>
+    </div>
+  {% endif %}
+
+  <div class="bp-listing-grid__wrap" data-grid>
+    {% for it in module.items %}
+      {# --- Coerção robusta do campo "Exibir" do item --- #}
+      {% set _ex_raw = it.exibir|default(true) %}
+      {% set _ex_s   = (_ex_raw ~ '')|trim|lower %}
+      {% set _ex_false = (_ex_raw is boolean and (not _ex_raw)) or _ex_s in ['nao','não','no','false','0','off'] %}
+      {% if not _ex_false %}
+        {% set chips_enabled = module.configura_es_gerais.show_badges and it.badges %}
+
+        {% set imgs_count = it.gallery|selectattr('image.src')|list|length %}
+        {% set vids_count = it.gallery|selectattr('video_url')|list|length %}
+        {% set media_count = imgs_count + vids_count %}
+
+        {% set item_id = (it.code or it.title or ('item-' ~ loop.index))|trim %}
+        {% set item_title = it.title|default('') %}
+
+        {# assinatura estável para o ID de favorito (base p/ hash) #}
+        {% set _sig_url = (it.item_url.href
+                            or it.item_url.url
+                            or it.item_url.full_url
+                            or it.item_url.link_url
+                            or it.item_url)|default('')|trim %}
+        {% set _sig = (item_id ~ '|' ~ item_title ~ '|' ~ _sig_url ~ '|' ~ loop.index)|trim %}
+
+        <article class="bp-card" data-card
+                 data-id="{{ item_id }}"
+                 data-title="{{ item_title|escape }}"
+                 data-uid="{{ _sig|escape }}">
+          <!-- MEDIA / CARROSSEL -->
+          <div class="bp-card__media" data-media>
+            <div class="bp-card__track" data-track>
+              {% for g in it.gallery %}
+                {% if g.image.src %}
+                  <figure class="bp-card__slide">
+                    <img
+                      src="{{ g.image.src }}"
+                      alt="{{ it.title|default('Imagem do imóvel')|escape }}"
+                      loading="lazy"
+                      decoding="async"
+                    >
+                  </figure>
+                {% endif %}
+                {% if g.video_url %}
+                  {% set vurl = g.video_url|trim %}
+                  {% set embed = '' %}
+                  {% if 'youtube.com/watch' in vurl %}
+                    {% set embed = vurl|replace('watch?v=', 'embed/') %}
+                  {% elif 'youtu.be/' in vurl %}
+                    {% set embed = vurl|replace('https://youtu.be/', 'https://www.youtube.com/embed/') %}
+                  {% elif 'youtube.com/embed/' in vurl %}
+                    {% set embed = vurl %}
+                  {% else %}
+                    {% set embed = '' %}
+                  {% endif %}
+                  {% if embed %}
+                    {% set sep = '?' if '?' not in embed else '&' %}
+                    <figure class="bp-card__slide is-video">
+                      <iframe
+                        src="{{ embed }}{{ sep }}rel=0&playsinline=1&modestbranding=1&enablejsapi=1"
+                        title="Vídeo do imóvel"
+                        loading="lazy"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen
+                      ></iframe>
+                    </figure>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {% if media_count == 0 %}
+                <figure class="bp-card__slide is-empty">
+                  <div class="bp-card__empty">Sem mídia</div>
+                </figure>
+              {% endif %}
+            </div>
+
+            {% if media_count > 1 %}
+              <button class="bp-card__nav is-prev" type="button" aria-label="Mídia anterior" data-prev>‹</button>
+              <button class="bp-card__nav is-next" type="button" aria-label="Próxima mídia" data-next>›</button>
+              <div class="bp-card__dots" data-dots></div>
+            {% endif %}
+
+            {% if chips_enabled %}
+              <div class="bp-card__chips" data-badges>
+                {% set _chips = it.badges|split(',') %}
+                {% for chip in _chips %}
+                  {% if chip|trim %}
+                    <span class="bp-chip is-v{{ (loop.index0 % 5) + 1 }}">{{ chip|trim }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if module.configura_es_gerais.show_favorite %}
+              <button class="bp-card__fav" type="button"
+                      aria-label="Adicionar aos favoritos"
+                      aria-pressed="false"
+                      data-fav>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path fill="currentColor"
+                    d="M12.1 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.53C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54l1.15 1.31z" />
+                </svg>
+              </button>
+            {% endif %}
+          </div>
+
+          <!-- CORPO -->
+          <div class="bp-card__body">
+            {% if it.code %}
+              <div class="bp-card__codechips">
+                {% for tag in it.code|split(',') %}
+                  {% if tag|trim %}
+                    <span class="bp-chip code is-v{{ (loop.index0 % 5) + 1 }}">{{ tag|trim }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if it.title %}
+              <h3 class="bp-card__title" title="{{ it.title }}">{{ it.title }}</h3>
+            {% endif %}
+
+            <ul class="bp-card__specs">
+              {% if it.quartos   %}<li>🛏 {{ it.quartos }}</li>{% endif %}
+              {% if it.banheiros %}<li>🚿 {{ it.banheiros }}</li>{% endif %}
+              {% if it.vagas     %}<li>🚗 {{ it.vagas }}</li>{% endif %}
+              {% if it.area      %}<li>📐 {{ it.area }}</li>{% endif %}
+            </ul>
+
+            <div class="bp-card__divider" aria-hidden="true"></div>
+
+            {% set _rua_raw = it.rua|default('')|trim %}
+            {% set _num_raw = it.numero|default('')|trim %}
+            {% set _cep_raw = it.cep|default('')|trim %}
+            {% set _city    = it.city|default('')|trim %}
+            {% set _cep_digits = _cep_raw|regex_replace('[^0-9]', '') %}
+            {% set _cep_ok = (_cep_digits|length) == 8 %}
+            {% set _cep_fmt = _cep_digits[0:5] ~ '-' ~ _cep_digits[5:8] if _cep_ok else '' %}
+            {% set _has_addr = _rua_raw and _num_raw and _cep_ok %}
+
+            {% set _addr_line =
+                _rua_raw ~ ', ' ~ _num_raw ~
+                ((', ' ~ _city) if _city else '') ~
+                ((', ' ~ _cep_fmt) if _cep_fmt else '')
+            %}
+            {% set _maps_addr_query = (_addr_line)|urlencode if _has_addr else '' %}
+            {% set _maps_city_query = (_city)|urlencode if _city else '' %}
+            {% set _maps_href = ('https://www.google.com/maps/search/?api=1&query=' ~ (_maps_addr_query if _maps_addr_query else _maps_city_query)) if (_maps_addr_query or _maps_city_query) else '' %}
+
+            <div class="bp-card__footer">
+              {% if it.price %}
+                <div class="bp-card__price" data-price="{{ it.price }}">{{ it.price }}</div>
+              {% endif %}
+
+              <div class="bp-card__loc">
+                {% if _maps_href %}
+                  <a class="bp-card__loclink" href="{{ _maps_href }}" target="_blank" rel="noopener"
+                     title="{% if _has_addr %}{{ _rua_raw }}, {{ _num_raw }} • CEP {{ _cep_fmt }}{% if _city %} • {{ _city }}{% endif %}{% else %}{{ _city }}{% endif %}">
+                    {% if _city %}<span class="bp-card__cityline">📍 {{ _city }}</span>{% endif %}
+                    {% if _has_addr %}
+                      <span class="bp-card__addrline">{{ _rua_raw }}, {{ _num_raw }} • CEP {{ _cep_fmt }}</span>
+                    {% endif %}
+                  </a>
+                {% else %}
+                  {% if _city %}<span class="bp-card__cityline">📍 {{ _city }}</span>{% endif %}
+                  {% if _has_addr %}
+                    <span class="bp-card__addrline">{{ _rua_raw }}, {{ _num_raw }} • CEP {{ _cep_fmt }}</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+
+            {# Overlay/link respeitando open_link #}
+            {% set link_url = '' %}
+            {% if module.configura_es_gerais.open_link == 'external' %}
+              {% set link_url = (it.item_url.href
+                                  or it.item_url.url
+                                  or it.item_url.full_url
+                                  or it.item_url.link_url
+                                  or it.item_url)|default('')|trim %}
+            {% else %}
+              {% set link_url = it.item_page.url|default('')|trim %}
+              {% if not link_url %}
+                {% set link_url = (it.item_url.href
+                                    or it.item_url.url
+                                    or it.item_url.full_url
+                                    or it.item_url.link_url
+                                    or it.item_url)|default('')|trim %}
+              {% endif %}
+            {% endif %}
+            {% if link_url %}
+              <a class="bp-card__link"
+                 href="{{ link_url }}"
+                 aria-label="Ver detalhes de {{ it.title|default('imóvel')|escape }}"></a>
+            {% endif %}
+          </div>
+        </article>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="bp-listing-grid__more" data-more hidden>
+    <button class="bp-more__btn" type="button" data-more-btn>Ver mais</button>
+  </div>
+</section>
+
+{# -- JSON-LD ItemList (somente itens exibidos) -- #}
+{%- set list = [] -%}
+{%- for it in module.items -%}
+  {# mesma regra de exibição usada nos cards #}
+  {%- set _ex_raw = it.exibir|default(true) -%}
+  {%- set _ex_s   = (_ex_raw ~ '')|trim|lower -%}
+  {%- set _ex_false = (_ex_raw is boolean and (not _ex_raw)) or _ex_s in ['nao','não','no','false','0','off'] -%}
+  {%- if not _ex_false -%}
+    {%- set _url = '' -%}
+    {%- if module.configura_es_gerais.open_link == 'external' -%}
+      {%- set _url = (it.item_url.href
+                      or it.item_url.url
+                      or it.item_url.full_url
+                      or it.item_url.link_url
+                      or it.item_url)|default('')|trim -%}
+    {%- else -%}
+      {%- set _url = it.item_page.url|default('')|trim -%}
+      {%- if not _url -%}
+        {%- set _url = (it.item_url.href
+                        or it.item_url.url
+                        or it.item_url.full_url
+                        or it.item_url.link_url
+                        or it.item_url)|default('')|trim -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- if _url -%}
+      {%- set list = list + [{
+        "@type": "ListItem",
+        "position": loop.index,
+        "url": _url,
+        "name": it.title
+      }] -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if list|length > 0 -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": {{ _title_txt|tojson }},
+  "itemListElement": {{ list|tojson }}
+}
+</script>
+{%- endif -%}

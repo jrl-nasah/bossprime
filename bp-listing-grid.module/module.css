@@ -1,0 +1,269 @@
+/* ===== Base tipográfica do módulo (escopado) ===== */
+.bp-listing-grid{
+  font-family: var(--ff-base, Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  --bp-primary:#b38a3b;
+  --bp-secondary:#0e3b3d;
+
+  --fav-on:var(--bp-primary);
+  --fav-off:var(--bp-secondary);
+
+  --chip-1:#f3ce24;
+  --chip-2:color-mix(in srgb, var(--bp-primary),#fff 70%);
+  --chip-3:color-mix(in srgb, var(--bp-secondary),#fff 80%);
+  --chip-4:color-mix(in srgb, var(--bp-secondary),#fff 65%);
+  --chip-5:color-mix(in srgb, var(--bp-primary),#fff 85%);
+
+  --code-1:#E8F3FF; --code-1-text:#0b3d62;
+  --code-2:#E8FBEA; --code-2-text:#135e2e;
+  --code-3:#FFF2D9; --code-3-text:#7a3e00;
+  --code-4:#F3E8FF; --code-4-text:#4b2a7a;
+  --code-5:#ECEFF3; --code-5-text:#2f3a45;
+
+  --filter-chip-bg:#f3f5f7;
+  --filter-chip-fg:#2f3a45;
+  --filter-chip-bd:#e3e7eb;
+  --filter-chip-bg-active:var(--bp-secondary);
+  --filter-chip-fg-active:#fff;
+  --filter-sticky-top:clamp(8px, 2vw, 16px);
+}
+
+/* ===== Cabeçalho (título + lupa) ===== */
+.bp-listing-grid__head{
+  position: sticky; top: var(--filter-sticky-top);
+  z-index: 5;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin: 0 0 10px;
+  background: transparent;
+}
+.bp-listing-grid__title{
+  margin:0;
+  font-family: var(--ff-heading, "Le Major", var(--ff-base, Montserrat, Arial, sans-serif));
+  font-weight: 400;
+  letter-spacing:.2px;
+  font-size:clamp(20px, 2.4vw, 24px);
+  line-height:1.1;
+  color:#0f2a31;
+}
+
+/* Botão da lupa com badge */
+.bp-filters__toggle{
+  all:unset; position:relative;
+  width:40px; height:40px; display:grid; place-items:center;
+  border-radius:10px; cursor:pointer; background:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.bp-filters__toggle svg{ width:20px; height:20px; color:#123; }
+.bp-filters__badge{
+  position:absolute; top:-6px; right:-6px; min-width:18px; height:18px;
+  padding:0 5px; border-radius:999px; display:grid; place-items:center;
+  background:var(--bp-primary); color:#fff; font-size:11px; font-weight:700;
+}
+.bp-filters__badge[hidden]{ display:none !important; }
+
+/* Painel de filtros */
+.bp-filters[hidden]{ display:none !important; }
+.bp-filters{
+  position: sticky; top: calc(var(--filter-sticky-top) + 48px);
+  z-index: 4;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background: transparent; margin: 0 0 12px;
+}
+.bp-filters__chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.bp-filterchip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:999px; border:1px solid var(--filter-chip-bd);
+  background:var(--filter-chip-bg); color:var(--filter-chip-fg);
+  font-size:13px; font-weight:700; line-height:1;
+  cursor:pointer; user-select:none;
+  font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+.bp-filterchip:hover{ filter:brightness(0.98); }
+.bp-filterchip.is-active{
+  background:var(--filter-chip-bg-active);
+  color:var(--filter-chip-fg-active);
+  border-color:transparent;
+}
+.bp-filterchip .x{ display:none; font-weight:900; }
+.bp-filterchip.is-active .x{ display:inline; }
+
+/* limpar filtros */
+.bp-filters__clear{
+  all:unset; padding:8px 10px; border-radius:8px; cursor:pointer;
+  color:#566; font-weight:700; font-size:12px;
+  font-family: var (--ff-base, Montserrat, Arial, sans-serif);
+}
+
+/* ===== GRID ===== */
+.bp-listing-grid__wrap{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(var(--cols-d), minmax(0,1fr));
+  align-items:stretch;
+}
+@media (max-width:1024px){
+  .bp-listing-grid__wrap{ grid-template-columns:repeat(var(--cols-t), minmax(0,1fr)); }
+}
+@media (max-width:640px){
+  .bp-listing-grid__wrap{ grid-template-columns:repeat(var(--cols-m), minmax(0,1fr)); }
+}
+
+/* ===== CARD ===== */
+.bp-card{
+  position:relative; background:#fff; border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  overflow:hidden; display:flex; flex-direction:column;
+}
+
+/* Media */
+.bp-card__media{
+  position:relative;
+  background:#0f2a31;
+  aspect-ratio:16/9;
+  overflow:hidden;
+  min-height:clamp(180px, 36vw, 350px);
+  isolation:isolate;
+}
+
+/* Track */
+.bp-card__track{
+  position:relative; z-index:1; display:grid;
+  grid-auto-flow:column; grid-auto-columns:100%;
+  height:100%; transition: transform .35s cubic-bezier(.2,.7,.2,1);
+  touch-action: pan-y; -ms-touch-action: pan-y;
+}
+
+/* Slides */
+.bp-card__slide{ position:relative; display:grid; place-items:stretch; background:#0f2a31; margin:0; height:100%; overflow:hidden; }
+.bp-card__slide img{ width:100%; height:100%; object-fit:cover; display:block; }
+.bp-card__slide iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+
+.bp-card__slide.is-empty{ color:#bcd; }
+.bp-card__empty{ opacity:.7; font-size:14px; }
+
+/* Nav */
+.bp-card__nav{
+  all:unset; position:absolute; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; display:grid; place-items:center;
+  cursor:pointer; color:#fff; background:rgba(0,0,0,.35);
+  border-radius:999px; z-index:50;
+}
+.bp-card__nav.is-prev{ left:10px; } .bp-card__nav.is-next{ right:10px; }
+.bp-card__media.is-video-slide .bp-card__nav{ top:50%; transform:translateY(-50%); }
+.bp-card__nav:focus-visible{ outline:2px solid color-mix(in srgb, var(--bp-primary), #fff 25%); outline-offset:2px; }
+
+/* Dots */
+.bp-card__dots{ position:absolute; left:50%; transform:translateX(-50%); bottom:10px; display:flex; gap:8px; z-index:45; }
+.bp-card__dots button{ all:unset; width:24px; height:4px; border-radius:2px; background:#fff; opacity:.45; cursor:pointer; }
+.bp-card__dots button.is-active{ opacity:1; }
+
+/* Chips topo do card */
+.bp-card__chips{ position:absolute; top:10px; left:10px; display:flex; gap:8px; flex-wrap:wrap; z-index:48; }
+.bp-chip{
+  padding:6px 10px; border-radius:10px; font-size:12px; font-weight:700; line-height:1;
+  color:#1b1b1b; font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+.bp-chip.is-v1{ background:var(--chip-1); color:#1b1b1b; }
+.bp-chip.is-v2{ background:var(--chip-2); color: var(--bp-secondary); }
+.bp-chip.is-v3{ background:var(--chip-3); color: var(--bp-secondary); }
+.bp-chip.is-v4{ background:var(--chip-4); color: var(--bp-secondary); }
+.bp-chip.is-v5{ background:var(--chip-5); color:#3d2a00; }
+
+/* Chips “código” */
+.bp-card__codechips{ display:flex; gap:8px; flex-wrap:wrap; }
+.bp-chip.code{ font-weight:700; }
+.bp-chip.code.is-v1{ background:var(--code-1); color:var(--code-1-text); }
+.bp-chip.code.is-v2{ background:var(--code-2); color:var(--code-2-text); }
+.bp-chip.code.is-v3{ background:var(--code-3); color:var(--code-3-text); }
+.bp-chip.code.is-v4{ background:var(--code-4); color:var(--code-4-text); }
+.bp-chip.code.is-v5{ background:var(--code-5); color:var(--code-5-text); }
+
+/* Favorito (somente ícone) */
+.bp-card__fav{
+  all:unset; position:absolute; top:10px; right:10px;
+  width:40px; height:40px; display:grid; place-items:center;
+  border-radius:12px; background:transparent!important; box-shadow:none!important;
+  cursor:pointer; color:var(--fav-off); transition:transform .08s ease, color .2s ease; z-index:49;
+}
+.bp-card__fav svg{ width:26px; height:26px; }
+.bp-card__fav:hover{ transform:translateY(-1px); }
+.bp-card__fav:active{ transform:translateY(0); }
+.bp-card__fav:focus-visible{ outline:2px solid color-mix(in srgb, var(--fav-off), #fff 40%); outline-offset:2px; }
+.bp-card__fav.is-active{ color:var(--fav-on); }
+
+/* Body */
+.bp-card__body{
+  padding:14px 16px 16px; position:relative; display:flex; flex-direction:column; gap:10px;
+  font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+.bp-card__title{
+  margin:6px 0 0;
+  font-family: var(--ff-heading, "Le Major", var(--ff-base, Montserrat, Arial, sans-serif));
+  font-weight:400;
+  font-size: clamp(18px, 2.2vw, 20px);
+  line-height:1.25;
+  color:#0f2a31;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+.bp-card__specs{
+  list-style:none; display:flex; gap:18px; margin:0; padding:0;
+  color:#2f413f; font-weight:600; font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+
+/* Divisor */
+.bp-card__divider{ height:1px; background:color-mix(in srgb, var(--bp-secondary), #fff 85%); margin:8px 0 10px; }
+
+/* Rodapé */
+.bp-card__footer{
+  display:flex; flex-wrap:wrap; align-items:flex-start; gap:10px;
+  container-type:inline-size;
+}
+.bp-card__price{
+  font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+  font-weight:700; color:#0e3b3d; line-height:1.15;
+  font-size: 20px; /* base; o JS reduz se precisar */
+  white-space:normal; text-wrap:balance; overflow-wrap:anywhere; word-break:normal;
+  align-self:flex-start;
+  flex:1 1 48%; max-width:48%;
+}
+/* Numeric-only: não quebrar; JS alterna esta classe */
+.bp-card__price.is-nowrap{
+  white-space:nowrap; text-wrap:nowrap; overflow-wrap:normal; word-break:keep-all;
+}
+.bp-card__loc{
+  display:flex;
+  flex:1 1 48%;
+  max-width:52%;
+  text-align:right; align-self:flex-start; padding-right:10px; min-width:0;
+}
+.bp-card__loclink{
+  display:flex; flex-direction:column; align-items:flex-end; gap:2px; color:inherit; text-decoration:none; position:relative; z-index:2; max-width:100%;
+  font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+.bp-card__loclink:hover{ text-decoration:underline; }
+.bp-card__cityline{ color:#5f736e; font-weight:600; line-height:1; display:inline-flex; align-items:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.bp-card__addrline{ color:#5f736e; font-weight:600; font-size:12px; line-height:1.3; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; max-width:100%; }
+
+/* Quando o JS precisar dar linha inteira ao preço */
+.bp-card__price.is-fullrow{ flex-basis:100%; max-width:100%; }
+
+/* link-overlay */
+.bp-card__link{ position:absolute; inset:0; z-index:1; cursor:pointer; }
+
+/* ===== Ver mais ===== */
+.bp-listing-grid__more[hidden]{ display:none !important; }
+.bp-listing-grid__more{ display:flex; justify-content:center; margin-top:16px; }
+.bp-more__btn{
+  all:unset; cursor:pointer;
+  padding:10px 16px; border-radius:999px;
+  background:var(--bp-secondary); color:#fff; font-weight:800; font-size:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  font-family: var(--ff-base, Montserrat, Arial, sans-serif);
+}
+.bp-more__btn:hover{ filter:brightness(1.02); }
+.bp-more__btn:focus-visible{ outline:2px solid color-mix(in srgb, var(--bp-secondary),#fff 30%); outline-offset:2px; }
+
+/* Paginação/filtro */
+.bp-card.is-hidden{ display:none !important; }
+.bp-card[data-pg-hidden="1"]{ display:none !important; }

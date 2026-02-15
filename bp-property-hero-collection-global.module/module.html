@@ -1,0 +1,490 @@
+{# bp-property-hero-collection / module.html
+   - MODO DETALHE: quando existe ?codigo / ?codigo_imovel / ?codigo_imovel_interesse
+   - MODO LISTAGEM: quando NÃO existe código (mostra busca + cards)
+#}
+
+{# pega código da querystring (server-side) #}
+{% set __qs_code =
+  (request.query_dict.codigo
+   or request.query_dict.codigo_imovel
+   or request.query_dict.codigo_imovel_interesse
+   or '')|default('')|trim
+%}
+{% set __want = (__qs_code ~ '')|trim|lower|regex_replace('[^a-z0-9]', '') %}
+
+<div class="bp-prop-hero-collection" data-qparam="codigo">
+
+  {# ============================
+     MODO DETALHE (1 imóvel)
+     ============================ #}
+  {% if __want %}
+    <p class="bp-prop-hero-collection__empty" data-empty hidden>Imóvel não encontrado.</p>
+
+    {% for it in module.items %}
+      {% set _code = (it.codigo_imovel|default('') ~ '')|trim %}
+      {% set __code_norm = (_code|lower)|regex_replace('[^a-z0-9]', '') %}
+
+      {% if __code_norm == __want %}
+        {% set _price   = (it.price|default('') ~ '')|trim %}
+        {% set _badge   = (it.badge|default('') ~ '')|trim %}
+        {% set _title   = (it.title|default('') ~ '')|trim %}
+        {% set _desc    = (it.description|default('') ~ '') %}
+
+        {% set _cta_url = (it.cta_url.href
+                            or it.cta_url.url
+                            or it.cta_url.full_url
+                            or it.cta_url.link_url
+                            or it.cta_url
+                            |default(''))|trim %}
+        {% set _cta_lbl = (it.cta_label|default('Falar com o Felipe') ~ '')|trim %}
+
+        {# Endereço (coerções p/ evitar crash quando cep é Number) #}
+        {% set __rua    = (it.rua|default('') ~ '')|trim %}
+        {% set __num    = (it.numero|default('') ~ '')|trim %}
+        {% set __city   = (it.city|default('') ~ '')|trim %}
+        {% set __bairro = (it.bairro|default('') ~ '')|trim %}
+        {% set __cep_s  = (it.cep|default('') ~ '')|trim %}
+        {% set __cep_digits = __cep_s|regex_replace('[^0-9]', '') %}
+        {% set __cep_ok     = (__cep_digits|length) == 8 %}
+        {% set __cep_fmt    = (__cep_digits[0:5] ~ '-' ~ __cep_digits[5:8]) if __cep_ok else '' %}
+
+        {# Contagem robusta das mídias #}
+        {% set _imgs_count = it.gallery|selectattr('image.src')|list|length %}
+        {% set _vids_count = it.gallery|selectattr('video_url')|list|length %}
+        {% set _media_count = _imgs_count + _vids_count %}
+
+        {# ---------- Saneamento specs ---------- #}
+        {% set _q_raw = (it.quartos|default('') ~ '')|trim %}
+        {% set _q_l   = _q_raw|lower %}
+        {% set _q_dig = _q_raw|regex_replace('[^0-9]', '') %}
+        {% set _q_ok  = (_q_dig and (_q_dig|int > 0)) and (_q_l not in ['null','undefined','nan']) %}
+
+        {% set _s_raw = (it.suites|default('') ~ '')|trim %}
+        {% set _s_l   = _s_raw|lower %}
+        {% set _s_dig = _s_raw|regex_replace('[^0-9]', '') %}
+        {% set _s_ok  = (_s_dig and (_s_dig|int > 0)) and (_s_l not in ['null','undefined','nan']) %}
+
+        {% set _b_raw = (it.banheiros|default('') ~ '')|trim %}
+        {% set _b_l   = _b_raw|lower %}
+        {% set _b_dig = _b_raw|regex_replace('[^0-9]', '') %}
+        {% set _b_ok  = (_b_dig and (_b_dig|int > 0)) and (_b_l not in ['null','undefined','nan']) %}
+
+        {% set _p_raw = (it.parking|default('') ~ '')|trim %}
+        {% set _p_l   = _p_raw|lower %}
+        {% set _p_dig = _p_raw|regex_replace('[^0-9]', '') %}
+        {% set _p_ok  = (_p_dig and (_p_dig|int > 0)) and (_p_l not in ['null','undefined','nan']) %}
+
+        {% set _area_raw = (it.area|default('') ~ '')|trim %}
+        {% set _area_l   = _area_raw|lower %}
+        {% set _area_dig = _area_raw|regex_replace('[^0-9]', '') %}
+        {% set _area_ok  = (_area_dig and (_area_dig|int > 0)) and (_area_l not in ['null','undefined','nan']) %}
+        {% set _ua       = (it.unidade_da_area|default('m²') ~ '')|trim or 'm²' %}
+
+        {% set _has_specs = _q_ok or _s_ok or _b_ok or _p_ok or _area_ok %}
+
+        <section class="bp-prop-hero"
+                 data-imovel
+                 data-code="{{ _code|escape }}"
+                 aria-label="Destaque do imóvel{% if _code %} {{ _code }}{% endif %}">
+          <div class="bp-prop-hero__grid">
+
+            <!-- ===== CARROSSEL (ESQUERDA) ===== -->
+            <div class="bp-prop-hero__carousel">
+              <div class="bp-prop-hero__track" data-track>
+                {% for g in it.gallery %}
+                  {% if g.image.src %}
+                    <figure class="bp-prop-hero__slide" data-slide>
+                      <img
+                        src="{{ g.image.src }}"
+                        alt="{{ (g.alt|default(_title or 'Imagem do imóvel') ~ '')|trim }}"
+                        loading="lazy"
+                        decoding="async"
+                        data-lightbox-src="{{ g.image.src }}"
+                      >
+                    </figure>
+                  {% endif %}
+
+                  {% if g.video_url %}
+                    {% set vurl = (g.video_url|trim) %}
+                    {% set embed = '' %}
+                    {% if 'youtube.com/watch' in vurl %}
+                      {% set embed = vurl|replace('watch?v=', 'embed/') %}
+                    {% elif 'youtu.be/' in vurl %}
+                      {% set embed = vurl|replace('https://youtu.be/', 'https://www.youtube.com/embed/') %}
+                    {% elif 'youtube.com/embed/' in vurl %}
+                      {% set embed = vurl %}
+                    {% endif %}
+                    {% if embed %}
+                      <figure class="bp-prop-hero__slide" data-slide data-embed="{{ embed }}"></figure>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              {% if _media_count > 1 %}
+                <button class="bp-prop-hero__nav is-prev" type="button" aria-label="Imagem anterior" data-prev>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke-width="2"/></svg>
+                </button>
+                <button class="bp-prop-hero__nav is-next" type="button" aria-label="Próxima imagem" data-next>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke-width="2"/></svg>
+                </button>
+
+                <div class="bp-prop-hero__thumbs" data-thumbs>
+                  {% set __go = 0 %}
+                  {% for g in it.gallery %}
+                    {% if g.image.src %}
+                      <button class="bp-prop-hero__thumb{% if __go == 0 %} is-active{% endif %}" type="button" data-go="{{ __go }}">
+                        <img src="{{ g.image.src }}" alt="Miniatura {{ __go + 1 }}">
+                      </button>
+                    {% endif %}
+                    {% if g.image.src or g.video_url %}{% set __go = __go + 1 %}{% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- ===== CARD DE INFO (DIREITA) ===== -->
+            <aside class="bp-prop-hero__info" aria-label="Informações do imóvel">
+
+              {% if _code %}
+                <div class="bp-prop-hero__code">
+                  <span class="bp-chip bp-chip--code">{{ _code }}</span>
+                </div>
+              {% endif %}
+
+              {% if _price %}
+                <div class="bp-prop-hero__price" data-price="{{ _price }}">{{ _price }}</div>
+              {% endif %}
+
+              {% if _badge %}
+                <div class="bp-prop-hero__meta">
+                  {% for b in _badge|split(',') %}
+                    {% if b|trim %}<span class="bp-chip">{{ b|trim }}</span>{% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% if _title %}<h1 class="bp-prop-hero__title">{{ _title }}</h1>{% endif %}
+
+              {% set _has_addr = (__rua and __num and __cep_ok) %}
+              {% if __city or __bairro or _has_addr %}
+                <p class="bp-prop-hero__address">
+                  {% if __city or __bairro %}
+                    📍
+                    {% if __city %}{{ __city }}{% endif %}
+                    {% if __bairro %}{% if __city %} • {% endif %}{{ __bairro }}{% endif %}
+                  {% endif %}
+                  {% if _has_addr %}{% if (__city or __bairro) %} — {% endif %}{{ __rua }}, {{ __num }} • CEP {{ __cep_fmt }}{% endif %}
+                </p>
+              {% endif %}
+
+              {% if _has_specs %}
+                <ul class="bp-prop-hero__specs" aria-label="Características do imóvel">
+                  {% if _q_ok %}<li title="Quartos"><span class="bp-ico" aria-hidden="true">🛏</span>{{ _q_raw }}</li>{% endif %}
+                  {% if _s_ok %}<li title="Suítes"><span class="bp-ico" aria-hidden="true">🛁</span>{{ _s_raw }}</li>{% endif %}
+                  {% if _b_ok %}<li title="Banheiros"><span class="bp-ico" aria-hidden="true">🚿</span>{{ _b_raw }}</li>{% endif %}
+                  {% if _p_ok %}<li title="Vagas"><span class="bp-ico" aria-hidden="true">🚗</span>{{ _p_raw }}</li>{% endif %}
+                  {% if _area_ok %}<li title="Área"><span class="bp-ico" aria-hidden="true">📐</span>{{ _area_raw }} {{ _ua }}</li>{% endif %}
+                </ul>
+              {% endif %}
+
+              {% if _desc %}
+                <div class="bp-prop-hero__desc">{{ _desc }}</div>
+              {% endif %}
+
+              {% if _cta_url %}
+                <a class="bp-btn bp-btn--primary" href="{{ _cta_url }}" target="_blank" rel="noopener">
+                  {{ _cta_lbl }}
+                </a>
+              {% endif %}
+            </aside>
+          </div>
+
+          <!-- ===== LIGHTBOX (FULLSCREEN) ===== -->
+          <div class="bp-lightbox" data-lightbox hidden>
+            <button class="bp-lightbox__close" type="button" aria-label="Fechar" data-lightbox-close></button>
+            <button class="bp-lightbox__nav is-prev" type="button" aria-label="Imagem anterior" data-lightbox-prev>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke-width="2"/></svg>
+            </button>
+            <div class="bp-lightbox__stage" data-stage></div>
+            <button class="bp-lightbox__nav is-next" type="button" aria-label="Próxima imagem" data-lightbox-next>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke-width="2"/></svg>
+            </button>
+            <div class="bp-lightbox__dots" data-lightbox-dots></div>
+          </div>
+        </section>
+
+        {# ===== MAPA (lazy: iframe entra via JS quando visível) ===== #}
+        {% set __has_all = __rua and __num and __city and __cep_ok %}
+        {% if __has_all %}
+          {% set __query = (__rua ~ ', ' ~ __num ~ (', ' ~ __bairro if __bairro else '') ~ ', ' ~ __city ~ ', ' ~ __cep_fmt)|trim %}
+          <section class="bp-prop-hero__mapwrap"
+                   data-mapwrap
+                   data-code="{{ _code|escape }}"
+                   aria-label="Mapa da localização do imóvel{% if _code %} {{ _code }}{% endif %}">
+            <div class="bp-prop-hero__map"
+                 data-map
+                 data-map-src="https://www.google.com/maps?q={{ __query|urlencode }}&output=embed"
+                 data-map-title="Mapa — {{ __rua }}, {{ __num }}{% if __bairro %} — {{ __bairro }}{% endif %} — {{ __city }} — CEP {{ __cep_fmt }}">
+            </div>
+          </section>
+        {% endif %}
+
+      {% endif %}
+    {% endfor %}
+
+  {# ============================
+     MODO LISTAGEM (busca + cards)
+     ============================ #}
+  {% else %}
+
+    <section class="bp-prop-search" data-prop-search aria-label="Busca de imóveis">
+      <form class="bp-prop-search__form" data-prop-form novalidate>
+        <div class="bp-prop-search__row">
+          <input class="bp-prop-search__input"
+                 type="search"
+                 inputmode="search"
+                 autocomplete="off"
+                 placeholder="Buscar por código, cidade ou texto…"
+                 aria-label="Buscar imóveis"
+                 data-q>
+          <button class="bp-btn bp-btn--primary" type="submit" data-submit>Buscar</button>
+          <button class="bp-prop-search__clear" type="button" data-clear hidden>Limpar</button>
+        </div>
+
+        <div class="bp-prop-search__filters" data-filters>
+          <select class="bp-prop-search__select" data-city aria-label="Filtrar por cidade">
+            <option value="">Cidade (todas)</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-neighborhood aria-label="Filtrar por bairro" disabled>
+            <option value="">Bairro (selecione a cidade)</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-type aria-label="Filtrar por tipo" hidden>
+            <option value="">Tipo (todos)</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-min-beds aria-label="Mínimo de quartos">
+            <option value="">Quartos (qualquer)</option>
+            <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-min-baths aria-label="Mínimo de banheiros">
+            <option value="">Banheiros (qualquer)</option>
+            <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-min-parking aria-label="Mínimo de vagas">
+            <option value="">Vagas (qualquer)</option>
+            <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option>
+          </select>
+
+          <select class="bp-prop-search__select" data-sort aria-label="Ordenar resultados">
+            <option value="">Ordenar (padrão)</option>
+            <option value="price_desc">Maior preço</option>
+            <option value="price_asc">Menor preço</option>
+            <option value="area_desc">Maior área</option>
+            <option value="area_asc">Menor área</option>
+            <option value="city_asc">Cidade (A–Z)</option>
+            <option value="city_desc">Cidade (Z–A)</option>
+            <option value="beds_desc">Quartos (maior)</option>
+            <option value="baths_desc">Banheiros (maior)</option>
+            <option value="title_asc">Título (A–Z)</option>
+          </select>
+
+          <input class="bp-prop-search__input"
+                 type="text"
+                 inputmode="numeric"
+                 placeholder="Preço mín."
+                 aria-label="Preço mínimo"
+                 data-min-price>
+
+          <input class="bp-prop-search__input"
+                 type="text"
+                 inputmode="numeric"
+                 placeholder="Preço máx."
+                 aria-label="Preço máximo"
+                 data-max-price>
+
+          <input class="bp-prop-search__input"
+                 type="text"
+                 inputmode="numeric"
+                 placeholder="Área mín. (m²)"
+                 aria-label="Área mínima"
+                 data-min-area>
+        </div>
+
+        {# Chips rápidos (JS dedup) + Favoritos (Fase 1) #}
+        <div class="bp-prop-search__chips" data-tag-chips aria-label="Filtros rápidos" hidden></div>
+
+        <div class="bp-prop-search__meta">
+          <span class="bp-prop-search__results" data-results>Carregando…</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="bp-prop-cards" aria-label="Lista de imóveis">
+      <div class="bp-prop-cards__grid" data-prop-grid>
+        {% for it in module.items %}
+          {% set _code   = (it.codigo_imovel|default('') ~ '')|trim %}
+          {% set _title  = (it.title|default('') ~ '')|trim %}
+          {% set _city   = (it.city|default('') ~ '')|trim %}
+          {% set _bairro = (it.bairro|default('') ~ '')|trim %}
+          {% set _badge  = (it.badge|default('') ~ '')|trim %}
+          {% set _price  = (it.price|default('') ~ '')|trim %}
+
+          {% set _q_raw    = (it.quartos|default('') ~ '')|trim %}
+          {% set _s_raw    = (it.suites|default('') ~ '')|trim %}
+          {% set _b_raw    = (it.banheiros|default('') ~ '')|trim %}
+          {% set _p_raw    = (it.parking|default('') ~ '')|trim %}
+          {% set _area_raw = (it.area|default('') ~ '')|trim %}
+
+          {% set _q_l   = _q_raw|lower %}
+          {% set _q_dig = _q_raw|regex_replace('[^0-9]', '') %}
+          {% set _q_ok  = (_q_dig and (_q_dig|int > 0)) and (_q_l not in ['null','undefined','nan']) %}
+
+          {% set _s_l   = _s_raw|lower %}
+          {% set _s_dig = _s_raw|regex_replace('[^0-9]', '') %}
+          {% set _s_ok  = (_s_dig and (_s_dig|int > 0)) and (_s_l not in ['null','undefined','nan']) %}
+
+          {% set _b_l   = _b_raw|lower %}
+          {% set _b_dig = _b_raw|regex_replace('[^0-9]', '') %}
+          {% set _b_ok  = (_b_dig and (_b_dig|int > 0)) and (_b_l not in ['null','undefined','nan']) %}
+
+          {% set _p_l   = _p_raw|lower %}
+          {% set _p_dig = _p_raw|regex_replace('[^0-9]', '') %}
+          {% set _p_ok  = (_p_dig and (_p_dig|int > 0)) and (_p_l not in ['null','undefined','nan']) %}
+
+          {% set _a_l   = _area_raw|lower %}
+          {% set _a_dig = _area_raw|regex_replace('[^0-9]', '') %}
+          {% set _a_ok  = (_a_dig and (_a_dig|int > 0)) and (_a_l not in ['null','undefined','nan']) %}
+
+          {# ✅ total de dormitórios = quartos + suítes #}
+          {% set __q_n = (_q_dig|int) if _q_ok else 0 %}
+          {% set __s_n = (_s_dig|int) if _s_ok else 0 %}
+          {% set __beds_total = __q_n + __s_n %}
+          {% set _bed_eff_raw = (__beds_total ~ '') if __beds_total > 0 else '' %}
+          {% set _bed_eff_ok  = __beds_total > 0 %}
+
+          {% set __bed_title = '' %}
+          {% if _q_ok and _s_ok %}
+            {% set __bed_title = __q_n ~ ' ' ~ ('quarto' if __q_n == 1 else 'quartos') ~ ' + ' ~ __s_n ~ ' ' ~ ('suíte' if __s_n == 1 else 'suítes') %}
+          {% elif _q_ok %}
+            {% set __bed_title = __q_n ~ ' ' ~ ('quarto' if __q_n == 1 else 'quartos') %}
+          {% elif _s_ok %}
+            {% set __bed_title = __s_n ~ ' ' ~ ('suíte' if __s_n == 1 else 'suítes') %}
+          {% endif %}
+
+          {% set __bed_icon = '🛏' %}
+          {% if (not _q_ok) and _s_ok %}
+            {% set __bed_icon = '🛌' %}
+          {% endif %}
+
+          {# primeira imagem como cover #}
+          {% set __cover = '' %}
+          {% set __imgs = it.gallery|selectattr('image.src')|list %}
+          {% if __imgs and (__imgs|length) > 0 %}
+            {% set __cover = (__imgs[0].image.src|default('') ~ '')|trim %}
+          {% endif %}
+
+          <article class="bp-prop-card"
+                   data-prop-card
+                   data-code="{{ _code|escape }}"
+                   data-title="{{ _title|escape }}"
+                   data-city="{{ _city|escape }}"
+                   data-neighborhood="{{ _bairro|escape }}"
+                   data-price="{{ _price|escape }}"
+                   data-beds="{{ _bed_eff_raw|escape }}"
+                   data-suites="{{ _s_raw|escape }}"
+                   data-baths="{{ _b_raw|escape }}"
+                   data-parking="{{ _p_raw|escape }}"
+                   data-area="{{ _area_raw|escape }}"
+                   data-tags="{{ _badge|escape }}">
+            <div class="bp-prop-card__media">
+              {# Fase 1: Favorito no card (sem fundo) #}
+              {% if _code %}
+                <button class="bp-prop-card__fav"
+                        type="button"
+                        data-fav
+                        aria-label="Clique para salvar como favorito: {{ _code|escape }}"
+                        aria-pressed="false"
+                        title="Clique para salvar como favorito">
+                  <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 21s-7-4.6-9.4-8.8C.6 8.7 2.2 5.7 5.2 5.1c1.7-.4 3.4.2 4.5 1.4 1.1-1.2 2.8-1.8 4.5-1.4 3 .6 4.6 3.6 2.6 7.1C19 16.4 12 21 12 21z"></path>
+                  </svg>
+                </button>
+              {% endif %}
+
+              {% if __cover %}
+                <img src="{{ __cover }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
+              {% else %}
+                <div class="bp-prop-card__ph">Sem foto</div>
+              {% endif %}
+
+              {% if _badge %}
+                <div class="bp-prop-card__badges" aria-hidden="true">
+                  {% for b in _badge|split(',') %}
+                    {% if b|trim %}<span class="bp-chip">{{ b|trim }}</span>{% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="bp-prop-card__body">
+              <div class="bp-prop-card__top">
+                {% if _code %}<span class="bp-chip bp-chip--code">{{ _code }}</span>{% endif %}
+                {% if _price %}<span class="bp-prop-card__price" data-price-text>{{ _price }}</span>{% endif %}
+              </div>
+
+              {% if _title %}<h3 class="bp-prop-card__title">{{ _title }}</h3>{% endif %}
+
+              {% if _city or _bairro %}
+                <div class="bp-prop-card__locrow">
+                  <p class="bp-prop-card__loc">
+                    📍
+                    {% if _city %}{{ _city }}{% endif %}
+                    {% if _bairro %}{% if _city %} • {% endif %}{{ _bairro }}{% endif %}
+                  </p>
+
+                  {% if _code %}
+                    <a class="bp-prop-card__cta"
+                       href="?codigo_imovel={{ _code|urlencode }}"
+                       data-cta
+                       aria-label="Ver detalhes do imóvel {{ _code|escape }}">
+                      Ver detalhes
+                    </a>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <ul class="bp-prop-card__specs" aria-label="Características">
+                {% if _bed_eff_ok %}
+                  <li title="{{ __bed_title|escape }}" aria-label="{{ __bed_title|escape }}">
+                    {{ __bed_icon }} {{ _bed_eff_raw }}
+                  </li>
+                {% endif %}
+                {% if _b_ok %}<li title="Banheiros">🚿 {{ _b_raw }}</li>{% endif %}
+                {% if _p_ok %}<li title="Vagas">🚗 {{ _p_raw }}</li>{% endif %}
+                {% if _a_ok %}<li title="Área">📐 {{ _area_raw }}</li>{% endif %}
+              </ul>
+
+              {% if _code %}
+                <a class="bp-prop-card__link"
+                   href="?codigo_imovel={{ _code|urlencode }}"
+                   aria-label="Ver detalhes do imóvel {{ _code|escape }}"></a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="bp-prop-cards__more" data-more hidden>
+        <button class="bp-more__btn" type="button" data-more-btn>Ver mais</button>
+      </div>
+
+      <p class="bp-prop-cards__empty" data-list-empty hidden>Nenhum imóvel encontrado com os filtros atuais.</p>
+    </section>
+
+  {% endif %}
+</div>
