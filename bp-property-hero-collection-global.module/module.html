@@ -459,7 +459,7 @@
               {% if _badge %}
                 <div class="bp-prop-card__badges" aria-hidden="true">
                   {% for b in _badge|split(',') %}
-                    {% if b|trim %}<span class="bp-chip">{{ b|trim }}</span>{% endif %}
+                    {% if b|trim %}<span class="bp-chip is-v{{ (loop.index0 % 5) + 1 }}">{{ b|trim }}</span>{% endif %}
                   {% endfor %}
                 </div>
               {% endif %}

@@ -875,3 +875,10 @@
 .bp-prop-card__dots button.is-active{
   opacity: 1;
 }
+
+/* Chips coloridos nos cards de listagem (.is-v1..v5) */
+.bp-prop-card__badges .bp-chip.is-v1{ --bg:#f3ce24; --fg:#1b1b1b; }
+.bp-prop-card__badges .bp-chip.is-v2{ --bg:#d4edda; --fg:#0e3b3d; }
+.bp-prop-card__badges .bp-chip.is-v3{ --bg:#d9edf7; --fg:#0e3b3d; }
+.bp-prop-card__badges .bp-chip.is-v4{ --bg:#f3e5f5; --fg:#0e3b3d; }
+.bp-prop-card__badges .bp-chip.is-v5{ --bg:#fff3cd; --fg:#3d2a00; }
