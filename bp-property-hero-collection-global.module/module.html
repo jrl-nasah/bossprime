@@ -381,12 +381,10 @@
             {% set __bed_icon = '🛌' %}
           {% endif %}
 
-          {# primeira imagem como cover #}
-          {% set __cover = '' %}
+          {# carrossel por card: contagem de mídias (cap 4) #}
           {% set __imgs = it.gallery|selectattr('image.src')|list %}
-          {% if __imgs and (__imgs|length) > 0 %}
-            {% set __cover = (__imgs[0].image.src|default('') ~ '')|trim %}
-          {% endif %}
+          {% set __vids = it.gallery|selectattr('video_url')|list %}
+          {% set __media_total = (__imgs|length) + (__vids|length) %}
 
           <article class="bp-prop-card"
                    data-prop-card
@@ -401,8 +399,8 @@
                    data-parking="{{ _p_raw|escape }}"
                    data-area="{{ _area_raw|escape }}"
                    data-tags="{{ _badge|escape }}">
-            <div class="bp-prop-card__media">
-              {# Fase 1: Favorito no card (sem fundo) #}
+            <div class="bp-prop-card__media" data-media>
+              {# Favorito #}
               {% if _code %}
                 <button class="bp-prop-card__fav"
                         type="button"
@@ -416,10 +414,46 @@
                 </button>
               {% endif %}
 
-              {% if __cover %}
-                <img src="{{ __cover }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
-              {% else %}
-                <div class="bp-prop-card__ph">Sem foto</div>
+              {# Track do carrossel (até 4 mídias) #}
+              <div class="bp-prop-card__track" data-track>
+                {% set __mc = 0 %}
+                {% for g in it.gallery %}
+                  {% if __mc < 4 and g.image.src %}
+                    <figure class="bp-prop-card__slide">
+                      <img src="{{ g.image.src }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
+                    </figure>
+                    {% set __mc = __mc + 1 %}
+                  {% endif %}
+                  {% if __mc < 4 and g.video_url %}
+                    {% set vurl = (g.video_url|trim) %}
+                    {% set embed = '' %}
+                    {% if 'youtube.com/watch' in vurl %}
+                      {% set embed = vurl|replace('watch?v=', 'embed/') %}
+                    {% elif 'youtu.be/' in vurl %}
+                      {% set embed = vurl|replace('https://youtu.be/', 'https://www.youtube.com/embed/') %}
+                    {% elif 'youtube.com/embed/' in vurl %}
+                      {% set embed = vurl %}
+                    {% endif %}
+                    {% if embed %}
+                      <figure class="bp-prop-card__slide is-video" data-embed="{{ embed }}">
+                        <div class="bp-prop-card__play" aria-hidden="true">▶</div>
+                      </figure>
+                      {% set __mc = __mc + 1 %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {% if __media_total == 0 %}
+                  <figure class="bp-prop-card__slide is-empty">
+                    <div class="bp-prop-card__ph">Sem foto</div>
+                  </figure>
+                {% endif %}
+              </div>
+
+              {# Nav + dots (só com 2+ mídias) #}
+              {% if __media_total > 1 %}
+                <button class="bp-prop-card__nav is-prev" type="button" aria-label="Mídia anterior" data-prev>‹</button>
+                <button class="bp-prop-card__nav is-next" type="button" aria-label="Próxima mídia" data-next>›</button>
+                <div class="bp-prop-card__dots" data-dots></div>
               {% endif %}
 
               {% if _badge %}

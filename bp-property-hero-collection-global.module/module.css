@@ -764,3 +764,114 @@
   font-weight: 800;
 }
 .bp-prop-cards__empty[hidden]{ display:none !important; }
+
+
+/* ==========================================================================
+   CARROSSEL POR CARD (listagem)
+   Track, slides, nav, dots, vídeo placeholder
+   ========================================================================== */
+
+/* Track */
+.bp-prop-card__track{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  height: 100%;
+  transition: transform .35s cubic-bezier(.2,.7,.2,1);
+  touch-action: pan-y;
+  -ms-touch-action: pan-y;
+}
+
+/* Slides */
+.bp-prop-card__slide{
+  position: relative;
+  display: grid;
+  place-items: stretch;
+  background: #0f2a31;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.bp-prop-card__slide img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bp-prop-card__slide iframe{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.bp-prop-card__slide.is-empty{
+  color: #bcd;
+}
+
+/* Vídeo: placeholder com ícone play */
+.bp-prop-card__slide.is-video{
+  background: #0a1e20;
+}
+.bp-prop-card__play{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  color: rgba(255,255,255,.7);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Nav (setas) */
+.bp-prop-card__nav{
+  all: unset;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(0,0,0,.35);
+  border-radius: 999px;
+  z-index: 4;
+  font-size: 18px;
+  line-height: 1;
+}
+.bp-prop-card__nav.is-prev{ left: 8px; }
+.bp-prop-card__nav.is-next{ right: 8px; }
+.bp-prop-card__nav:focus-visible{
+  outline: 2px solid color-mix(in srgb, #b38a3b, #fff 25%);
+  outline-offset: 2px;
+}
+
+/* Dots */
+.bp-prop-card__dots{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 4;
+}
+.bp-prop-card__dots button{
+  all: unset;
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff;
+  opacity: .4;
+  cursor: pointer;
+  transition: opacity .15s ease;
+}
+.bp-prop-card__dots button.is-active{
+  opacity: 1;
+}

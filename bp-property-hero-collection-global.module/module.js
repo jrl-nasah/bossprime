@@ -1070,6 +1070,146 @@
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => recomputePaginator());
     }, { passive:true });
+
+    /* ========= Carrossel por card (até 4 mídias, lazy init) ========= */
+
+    function mountVideoIframe(slide){
+      if (!slide || slide.querySelector('iframe')) return;
+      const raw = slide.dataset.embed;
+      if (!raw) return;
+      const sep = raw.includes('?') ? '&' : '?';
+      const src = raw + sep + 'rel=0&playsinline=1&modestbranding=1&enablejsapi=1';
+      const ifr = document.createElement('iframe');
+      ifr.src = src;
+      ifr.title = 'Vídeo do imóvel';
+      ifr.loading = 'lazy';
+      ifr.allow = 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      ifr.allowFullscreen = true;
+      ifr.setAttribute('frameborder', '0');
+      slide.appendChild(ifr);
+      const ph = slide.querySelector('.bp-prop-card__play');
+      if (ph) ph.remove();
+    }
+
+    function unmountVideoIframe(slide){
+      if (!slide) return;
+      const ifr = slide.querySelector('iframe');
+      if (!ifr) return;
+      try { ifr.contentWindow?.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}), '*'); } catch {}
+      ifr.remove();
+      if (slide.dataset.embed && !slide.querySelector('.bp-prop-card__play')){
+        const ph = document.createElement('div');
+        ph.className = 'bp-prop-card__play';
+        ph.setAttribute('aria-hidden', 'true');
+        ph.textContent = '▶';
+        slide.appendChild(ph);
+      }
+    }
+
+    function initCardCarousel(card){
+      if (!card || card.dataset.carouselInited === '1') return;
+      card.dataset.carouselInited = '1';
+
+      const track = card.querySelector('[data-track]');
+      if (!track) return;
+
+      const slidesEls = Array.from(track.querySelectorAll('.bp-prop-card__slide'));
+      const total = slidesEls.length;
+
+      if (total <= 1){
+        track.style.transform = 'translateX(0%)';
+        if (slidesEls[0]?.dataset.embed) mountVideoIframe(slidesEls[0]);
+        return;
+      }
+
+      const prevBtn = card.querySelector('[data-prev]');
+      const nextBtn = card.querySelector('[data-next]');
+      const dotsC   = card.querySelector('[data-dots]');
+      let idx = 0;
+      const wrap = n => (n + total) % total;
+
+      let dots = [];
+      if (dotsC){
+        for (let k = 0; k < total; k++){
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('aria-label', 'Mídia ' + (k + 1));
+          if (k === 0) b.classList.add('is-active');
+          b.addEventListener('click', e => { e.stopPropagation(); idx = k; update(true); });
+          dotsC.appendChild(b);
+        }
+        dots = Array.from(dotsC.children);
+      }
+
+      function pauseVideos(){
+        slidesEls.forEach(s => {
+          const ifr = s.querySelector('iframe');
+          if (ifr){
+            try { ifr.contentWindow?.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}), '*'); } catch {}
+          }
+        });
+      }
+
+      function update(shouldPause){
+        track.style.transform = 'translateX(' + (-idx * 100) + '%)';
+        dots.forEach((d, k) => d.classList.toggle('is-active', k === idx));
+        if (shouldPause) pauseVideos();
+
+        const active = slidesEls[idx];
+        if (active?.dataset.embed) mountVideoIframe(active);
+
+        slidesEls.forEach((s, k) => {
+          if (k !== idx && s.dataset.embed && s.querySelector('iframe')) unmountVideoIframe(s);
+        });
+      }
+
+      function nextS(){ idx = wrap(idx + 1); update(true); }
+      function prevS(){ idx = wrap(idx - 1); update(true); }
+
+      prevBtn?.addEventListener('click', e => { e.stopPropagation(); prevS(); });
+      nextBtn?.addEventListener('click', e => { e.stopPropagation(); nextS(); });
+
+      const SWIPE = 40;
+      let x0 = null, y0 = null, axis = null, used = false;
+      const onDown = e => { x0 = e.clientX; y0 = e.clientY; axis = null; used = false; try { track.setPointerCapture?.(e.pointerId); } catch {} };
+      const onMove = e => {
+        if (x0 == null || y0 == null) return;
+        const dx = e.clientX - x0, dy = e.clientY - y0;
+        if (!axis && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        if (axis === 'x' && Math.abs(dx) > SWIPE && !used){ used = true; dx < 0 ? nextS() : prevS(); }
+      };
+      const onUp = e => { x0 = y0 = null; axis = null; used = false; try { track.releasePointerCapture?.(e.pointerId); } catch {} };
+
+      track.addEventListener('pointerdown', onDown, { passive: true });
+      track.addEventListener('pointermove', onMove, { passive: true });
+      track.addEventListener('pointerup', onUp, { passive: true });
+      track.addEventListener('pointercancel', onUp, { passive: true });
+
+      update(false);
+    }
+
+    /* Lazy-init carrosséis via IntersectionObserver */
+    (function initCardCarousels(){
+      const mediaEls = Array.from(grid.querySelectorAll('[data-prop-card] [data-media]'));
+      if (!mediaEls.length) return;
+
+      if (!('IntersectionObserver' in window)){
+        mediaEls.forEach(m => { const c = m.closest('[data-prop-card]'); if (c) initCardCarousel(c); });
+        return;
+      }
+
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting){
+            const c = e.target.closest('[data-prop-card]');
+            if (c) initCardCarousel(c);
+            io.unobserve(e.target);
+          }
+        });
+      }, { rootMargin: '200px' });
+
+      mediaEls.forEach(m => io.observe(m));
+    })();
   }
 
   function boot(){
