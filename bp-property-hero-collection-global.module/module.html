@@ -522,3 +522,36 @@
 
   {% endif %}
 </div>
+
+{# -- JSON-LD ItemList (SEO: listagem de imóveis) -- #}
+{% if not __want %}
+  {%- set __ld_list = [] -%}
+  {%- for it in module.items -%}
+    {%- set _code = (it.codigo_imovel|default('') ~ '')|trim -%}
+    {%- set _title = (it.title|default('') ~ '')|trim -%}
+    {%- if _code -%}
+      {%- set __ld_url = '' -%}
+      {%- try -%}
+        {%- set __ld_url = request.path ~ '?codigo_imovel=' ~ (_code|urlencode) -%}
+      {%- except -%}
+        {%- set __ld_url = '?codigo_imovel=' ~ (_code|urlencode) -%}
+      {%- endtry -%}
+      {%- set __ld_list = __ld_list + [{
+        "@type": "ListItem",
+        "position": loop.index,
+        "url": __ld_url,
+        "name": _title or _code
+      }] -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if __ld_list|length > 0 -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Imóveis",
+  "itemListElement": {{ __ld_list|tojson }}
+}
+</script>
+  {%- endif -%}
+{% endif %}

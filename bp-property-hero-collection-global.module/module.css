@@ -519,6 +519,11 @@
   flex-direction:column;
   min-height: 100%;
   cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.bp-prop-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.12);
 }
 .bp-prop-card.is-hidden,
 .bp-prop-card[data-pg-hidden="1"]{ display:none !important; }
