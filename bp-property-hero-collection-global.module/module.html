@@ -12,6 +12,19 @@
 %}
 {% set __want = (__qs_code ~ '')|trim|lower|regex_replace('[^a-z0-9]', '') %}
 
+{# Redirect: se tem código na URL mas NÃO estamos em /imoveis/, redireciona #}
+{% if __want %}
+<script>
+(function(){
+  var p = location.pathname.replace(/\/+$/,'');
+  if(p !== '/imoveis'){
+    var qs = location.search;
+    location.replace('/imoveis/' + qs);
+  }
+})();
+</script>
+{% endif %}
+
 <div class="bp-prop-hero-collection" data-qparam="codigo">
 
   {# ============================
