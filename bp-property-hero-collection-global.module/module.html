@@ -25,7 +25,12 @@
 </script>
 {% endif %}
 
-<div class="bp-prop-hero-collection" data-qparam="codigo">
+{# --- Coerção robusta: isOrder_Alter (campo escolha → string) --- #}
+{% set _order_raw = module.isOrder_Alter|default('true') %}
+{% set _order_s   = (_order_raw ~ '')|trim|lower %}
+{% set _order_shuffle = (_order_raw is boolean and _order_raw) or _order_s in ['sim','yes','true','1','on'] %}
+
+<div class="bp-prop-hero-collection" data-qparam="codigo"{% if _order_shuffle %} data-shuffle{% endif %}>
 
   {# ============================
      MODO DETALHE (1 imóvel)

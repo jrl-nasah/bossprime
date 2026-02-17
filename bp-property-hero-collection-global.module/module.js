@@ -84,6 +84,36 @@
     } catch {}
   };
 
+  /* ===== Shuffle por sessão (isOrder_Alter) ===== */
+  const SHUFFLE_SEED_KEY = 'bp_shuffle_seed_v1';
+
+  function mulberry32(a) {
+    return function() {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function getSessionSeed() {
+    try {
+      const stored = sessionStorage.getItem(SHUFFLE_SEED_KEY);
+      if (stored) return parseInt(stored, 10);
+      const seed = Math.floor(Math.random() * 2147483647) + 1;
+      sessionStorage.setItem(SHUFFLE_SEED_KEY, String(seed));
+      return seed;
+    } catch { return Math.floor(Math.random() * 2147483647) + 1; }
+  }
+
+  function fisherYatesShuffle(arr, rng) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
   function extractVideoSrc(raw) {
     if (!raw) return '';
     const t = String(raw).trim();
@@ -643,12 +673,25 @@
       };
     });
 
+    /* Shuffle por sessão — reordena cards na abertura se data-shuffle presente */
+    const shuffleEnabled = collection.hasAttribute('data-shuffle');
+    if (shuffleEnabled && meta.length > 1) {
+      const seed = getSessionSeed();
+      const rng = mulberry32(seed);
+      const indices = meta.map((_, i) => i);
+      fisherYatesShuffle(indices, rng);
+      indices.forEach((origIdx, newPos) => { meta[origIdx].__shuffleIdx = newPos; });
+      meta.slice().sort((a, b) => a.__shuffleIdx - b.__shuffleIdx).forEach(m => grid.appendChild(m.card));
+    } else {
+      meta.forEach((m, i) => { m.__shuffleIdx = i; });
+    }
+
     function applySort(sortKey){
       const remember = meta.map(m => m.card);
       const key = String(sortKey || '').trim();
       const list = meta.slice();
 
-      let comparator = (a,b) => a.__i - b.__i;
+      let comparator = (a,b) => a.__shuffleIdx - b.__shuffleIdx;
 
       if (key === 'price_asc')  comparator = (a,b) => (cmpNum(a.priceN, b.priceN,  1) || (a.__i - b.__i));
       if (key === 'price_desc') comparator = (a,b) => (cmpNum(a.priceN, b.priceN, -1) || (a.__i - b.__i));
