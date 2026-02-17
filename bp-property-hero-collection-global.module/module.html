@@ -93,10 +93,22 @@
 
         {% set _has_specs = _q_ok or _s_ok or _b_ok or _p_ok or _area_ok %}
 
-        <section class="bp-prop-hero"
+        {# --- Coerção robusta: isInvisible_Sell (campo escolha → string) --- #}
+        {% set _sell_raw = it.isInvisible_Sell|default('false') %}
+        {% set _sell_s   = (_sell_raw ~ '')|trim|lower %}
+        {% set _is_sold  = (_sell_raw is boolean and _sell_raw) or _sell_s in ['sim','yes','true','1','on'] %}
+
+        <section class="bp-prop-hero{% if _is_sold %} is-sold{% endif %}"
                  data-imovel
                  data-code="{{ _code|escape }}"
                  aria-label="Destaque do imóvel{% if _code %} {{ _code }}{% endif %}">
+          {# Selo VENDIDO (sobrepõe o grid inteiro) #}
+          {% if _is_sold %}
+            <div class="bp-prop-hero__sold" aria-label="Imóvel vendido">
+              <span>VENDIDO</span>
+            </div>
+          {% endif %}
+
           <div class="bp-prop-hero__grid">
 
             <!-- ===== CARROSSEL (ESQUERDA) ===== -->
@@ -364,6 +376,18 @@
     <section class="bp-prop-cards" aria-label="Lista de imóveis">
       <div class="bp-prop-cards__grid" data-prop-grid>
         {% for it in module.items %}
+          {# --- Coerção robusta: isVisible_home (campo escolha → string) --- #}
+          {% set _vis_raw = it.isVisible_home|default('true') %}
+          {% set _vis_s   = (_vis_raw ~ '')|trim|lower %}
+          {% set _vis_false = (_vis_raw is boolean and (not _vis_raw)) or _vis_s in ['nao','não','no','false','0','off'] %}
+
+          {# --- Coerção robusta: isInvisible_Sell (campo escolha → string) --- #}
+          {% set _sell_raw = it.isInvisible_Sell|default('false') %}
+          {% set _sell_s   = (_sell_raw ~ '')|trim|lower %}
+          {% set _sell_true = (_sell_raw is boolean and _sell_raw) or _sell_s in ['sim','yes','true','1','on'] %}
+
+          {# Exibe somente se visível E não vendido #}
+          {% if not _vis_false and not _sell_true %}
           {% set _code   = (it.codigo_imovel|default('') ~ '')|trim %}
           {% set _title  = (it.title|default('') ~ '')|trim %}
           {% set _city   = (it.city|default('') ~ '')|trim %}
@@ -573,6 +597,7 @@
               {% endif %}
             </div>
           </article>
+          {% endif %}{# fim: not _vis_false and not _sell_true #}
         {% endfor %}
       </div>
 
@@ -590,9 +615,16 @@
 {% if not __want %}
   {%- set __ld_list = [] -%}
   {%- for it in module.items -%}
+    {# visibilidade/vendido: mesma regra da listagem #}
+    {%- set _vis_raw = it.isVisible_home|default('true') -%}
+    {%- set _vis_s   = (_vis_raw ~ '')|trim|lower -%}
+    {%- set _vis_false = (_vis_raw is boolean and (not _vis_raw)) or _vis_s in ['nao','não','no','false','0','off'] -%}
+    {%- set _sell_raw = it.isInvisible_Sell|default('false') -%}
+    {%- set _sell_s   = (_sell_raw ~ '')|trim|lower -%}
+    {%- set _sell_true = (_sell_raw is boolean and _sell_raw) or _sell_s in ['sim','yes','true','1','on'] -%}
     {%- set _code = (it.codigo_imovel|default('') ~ '')|trim -%}
     {%- set _title = (it.title|default('') ~ '')|trim -%}
-    {%- if _code -%}
+    {%- if _code and not _vis_false and not _sell_true -%}
       {%- set __ld_path = (request.path|default(''))|trim -%}
       {%- set __ld_url = (__ld_path ~ '?codigo_imovel=' ~ (_code|urlencode)) if __ld_path else ('?codigo_imovel=' ~ (_code|urlencode)) -%}
       {%- set __ld_list = __ld_list + [{

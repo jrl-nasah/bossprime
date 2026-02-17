@@ -15,6 +15,37 @@
   width: calc(100vw - var(--edge) * 2);
   padding-block: clamp(10px, 2vw, 22px);
 }
+/* ============ VENDIDO (SOLD) ============ */
+.bp-prop-hero.is-sold{ pointer-events: none; position: relative; }
+.bp-prop-hero.is-sold .bp-prop-hero__grid{
+  opacity: .55;
+  filter: grayscale(.35);
+  pointer-events: none;
+}
+.bp-prop-hero__sold{
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.bp-prop-hero__sold span{
+  display: inline-block;
+  color: #b12a2a;
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border: 6px solid #b12a2a;
+  padding: .15em .5em;
+  transform: rotate(-18deg);
+  background: rgba(255,255,255,.75);
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+}
+
 .bp-prop-hero__grid{
   display: grid;
   grid-template-columns: minmax(720px, 2fr) minmax(380px, 1fr);
