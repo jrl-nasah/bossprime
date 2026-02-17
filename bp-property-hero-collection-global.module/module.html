@@ -51,7 +51,18 @@
         {# Contagem robusta das mídias #}
         {% set _imgs_count = it.gallery|selectattr('image.src')|list|length %}
         {% set _vids_count = it.gallery|selectattr('video_url')|list|length %}
-        {% set _media_count = _imgs_count + _vids_count %}
+        {# Fotos extras via gallery_bulk_urls (URLs separadas por ;) #}
+        {% set __bulk_raw = [] %}
+        {% for g in it.gallery %}
+          {% set __rb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
+          {% if __rb %}{% set __bulk_raw = __bulk_raw + (__rb|split(';')) %}{% endif %}
+        {% endfor %}
+        {% set __bulk_urls = [] %}
+        {% for __u in __bulk_raw %}
+          {% if (__u ~ '')|trim %}{% set __bulk_urls = __bulk_urls + [(__u ~ '')|trim] %}{% endif %}
+        {% endfor %}
+        {% set _bulk_count = __bulk_urls|length %}
+        {% set _media_count = _imgs_count + _vids_count + _bulk_count %}
 
         {# ---------- Saneamento specs ---------- #}
         {% set _q_raw = (it.quartos|default('') ~ '')|trim %}
@@ -118,6 +129,19 @@
                       <figure class="bp-prop-hero__slide" data-slide data-embed="{{ embed }}"></figure>
                     {% endif %}
                   {% endif %}
+
+                  {# Fotos extras via gallery_bulk_urls #}
+                  {% set __rb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
+                  {% if __rb %}
+                    {% for __bu in __rb|split(';') %}
+                      {% set __bu_url = (__bu ~ '')|trim %}
+                      {% if __bu_url %}
+                        <figure class="bp-prop-hero__slide" data-slide>
+                          <img src="{{ __bu_url }}" alt="{{ (g.alt|default(_title or 'Imagem do imóvel') ~ '')|trim }}" loading="lazy" decoding="async" data-lightbox-src="{{ __bu_url }}">
+                        </figure>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
                 {% endfor %}
               </div>
 
@@ -138,6 +162,19 @@
                       </button>
                     {% endif %}
                     {% if g.image.src or g.video_url %}{% set __go = __go + 1 %}{% endif %}
+                    {# Thumbs de fotos extras #}
+                    {% set __rb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
+                    {% if __rb %}
+                      {% for __bu in __rb|split(';') %}
+                        {% set __bu_url = (__bu ~ '')|trim %}
+                        {% if __bu_url %}
+                          <button class="bp-prop-hero__thumb{% if __go == 0 %} is-active{% endif %}" type="button" data-go="{{ __go }}">
+                            <img src="{{ __bu_url }}" alt="Miniatura {{ __go + 1 }}">
+                          </button>
+                          {% set __go = __go + 1 %}
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
                   {% endfor %}
                 </div>
               {% endif %}
@@ -384,7 +421,17 @@
           {# carrossel por card: contagem de mídias (cap 4) #}
           {% set __imgs = it.gallery|selectattr('image.src')|list %}
           {% set __vids = it.gallery|selectattr('video_url')|list %}
-          {% set __media_total = (__imgs|length) + (__vids|length) %}
+          {# Fotos extras via gallery_bulk_urls #}
+          {% set __card_bulk_raw = [] %}
+          {% for g in it.gallery %}
+            {% set __crb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
+            {% if __crb %}{% set __card_bulk_raw = __card_bulk_raw + (__crb|split(';')) %}{% endif %}
+          {% endfor %}
+          {% set __card_bulk = [] %}
+          {% for __cu in __card_bulk_raw %}
+            {% if (__cu ~ '')|trim %}{% set __card_bulk = __card_bulk + [(__cu ~ '')|trim] %}{% endif %}
+          {% endfor %}
+          {% set __media_total = (__imgs|length) + (__vids|length) + (__card_bulk|length) %}
 
           <article class="bp-prop-card"
                    data-prop-card
@@ -440,6 +487,22 @@
                       </figure>
                       {% set __mc = __mc + 1 %}
                     {% endif %}
+                  {% endif %}
+
+                  {# Fotos extras via gallery_bulk_urls #}
+                  {% set __crb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
+                  {% if __crb %}
+                    {% for __cbu in __crb|split(';') %}
+                      {% if __mc < 4 %}
+                        {% set __cbu_url = (__cbu ~ '')|trim %}
+                        {% if __cbu_url %}
+                          <figure class="bp-prop-card__slide">
+                            <img src="{{ __cbu_url }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
+                          </figure>
+                          {% set __mc = __mc + 1 %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
                   {% endif %}
                 {% endfor %}
                 {% if __media_total == 0 %}
