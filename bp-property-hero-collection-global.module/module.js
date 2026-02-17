@@ -188,6 +188,13 @@
     const prevS = () => goto(i - 1);
 
     if (track && slides.length) {
+      /* Mostra setas/thumbs somente com 2+ slides */
+      if (slides.length > 1) {
+        if (prev) prev.hidden = false;
+        if (next) next.hidden = false;
+        if (thumbsBar) thumbsBar.hidden = false;
+      }
+
       prev?.addEventListener('click', prevS);
       next?.addEventListener('click', nextS);
       thumbs.forEach(btn => btn.addEventListener('click', () => goto(+btn.dataset.go)));
@@ -1116,15 +1123,20 @@
       const slidesEls = Array.from(track.querySelectorAll('.bp-prop-card__slide'));
       const total = slidesEls.length;
 
+      const prevBtn = card.querySelector('[data-prev]');
+      const nextBtn = card.querySelector('[data-next]');
+      const dotsC   = card.querySelector('[data-dots]');
+
       if (total <= 1){
         track.style.transform = 'translateX(0%)';
         if (slidesEls[0]?.dataset.embed) mountVideoIframe(slidesEls[0]);
         return;
       }
 
-      const prevBtn = card.querySelector('[data-prev]');
-      const nextBtn = card.querySelector('[data-next]');
-      const dotsC   = card.querySelector('[data-dots]');
+      /* Mostra setas/dots com 2+ slides */
+      if (prevBtn) prevBtn.hidden = false;
+      if (nextBtn) nextBtn.hidden = false;
+      if (dotsC) dotsC.hidden = false;
       let idx = 0;
       const wrap = n => (n + total) % total;
 

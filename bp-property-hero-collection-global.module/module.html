@@ -61,22 +61,6 @@
         {% set __cep_ok     = (__cep_digits|length) == 8 %}
         {% set __cep_fmt    = (__cep_digits[0:5] ~ '-' ~ __cep_digits[5:8]) if __cep_ok else '' %}
 
-        {# Contagem robusta das mídias #}
-        {% set _imgs_count = it.gallery|selectattr('image.src')|list|length %}
-        {% set _vids_count = it.gallery|selectattr('video_url')|list|length %}
-        {# Fotos extras via gallery_bulk_urls (URLs separadas por ;) #}
-        {% set __bulk_raw = [] %}
-        {% for g in it.gallery %}
-          {% set __rb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
-          {% if __rb %}{% set __bulk_raw = __bulk_raw + (__rb|split(';')) %}{% endif %}
-        {% endfor %}
-        {% set __bulk_urls = [] %}
-        {% for __u in __bulk_raw %}
-          {% if (__u ~ '')|trim %}{% set __bulk_urls = __bulk_urls + [(__u ~ '')|trim] %}{% endif %}
-        {% endfor %}
-        {% set _bulk_count = __bulk_urls|length %}
-        {% set _media_count = _imgs_count + _vids_count + _bulk_count %}
-
         {# ---------- Saneamento specs ---------- #}
         {% set _q_raw = (it.quartos|default('') ~ '')|trim %}
         {% set _q_l   = _q_raw|lower %}
@@ -170,15 +154,15 @@
                 {% endfor %}
               </div>
 
-              {% if _media_count > 1 %}
-                <button class="bp-prop-hero__nav is-prev" type="button" aria-label="Imagem anterior" data-prev>
+              {# Setas + thumbs — visibilidade controlada por JS (slides.length > 1) #}
+                <button class="bp-prop-hero__nav is-prev" type="button" aria-label="Imagem anterior" data-prev hidden>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke-width="2"/></svg>
                 </button>
-                <button class="bp-prop-hero__nav is-next" type="button" aria-label="Próxima imagem" data-next>
+                <button class="bp-prop-hero__nav is-next" type="button" aria-label="Próxima imagem" data-next hidden>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke-width="2"/></svg>
                 </button>
 
-                <div class="bp-prop-hero__thumbs" data-thumbs>
+                <div class="bp-prop-hero__thumbs" data-thumbs hidden>
                   {% set __go = 0 %}
                   {% for g in it.gallery %}
                     {% if g.image.src %}
@@ -202,7 +186,6 @@
                     {% endif %}
                   {% endfor %}
                 </div>
-              {% endif %}
             </div>
 
             <!-- ===== CARD DE INFO (DIREITA) ===== -->
@@ -455,12 +438,14 @@
             {% set __bed_icon = '🛌' %}
           {% endif %}
 
-          {# carrossel por card: contagem de mídias (cap 4) #}
-          {% set __imgs = it.gallery|selectattr('image.src')|list %}
-          {% set __vids = it.gallery|selectattr('video_url')|list %}
-          {# Fotos extras via gallery_bulk_urls #}
+          {# carrossel por card: contagem de mídias (cap 4) — loop explícito #}
+          {% set __img_items = [] %}
+          {% set __vid_items = [] %}
           {% set __card_bulk_raw = [] %}
           {% for g in it.gallery %}
+            {% if g.image.src %}{% set __img_items = __img_items + [g.image.src] %}{% endif %}
+            {% set __cvurl = (g.video_url|default('') ~ '')|trim %}
+            {% if __cvurl %}{% set __vid_items = __vid_items + [__cvurl] %}{% endif %}
             {% set __crb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
             {% if __crb %}{% set __card_bulk_raw = __card_bulk_raw + (__crb|split(';')) %}{% endif %}
           {% endfor %}
@@ -468,7 +453,7 @@
           {% for __cu in __card_bulk_raw %}
             {% if (__cu ~ '')|trim %}{% set __card_bulk = __card_bulk + [(__cu ~ '')|trim] %}{% endif %}
           {% endfor %}
-          {% set __media_total = (__imgs|length) + (__vids|length) + (__card_bulk|length) %}
+          {% set __media_total = (__img_items|length) + (__vid_items|length) + (__card_bulk|length) %}
 
           <article class="bp-prop-card"
                    data-prop-card
@@ -549,12 +534,10 @@
                 {% endif %}
               </div>
 
-              {# Nav + dots (só com 2+ mídias) #}
-              {% if __media_total > 1 %}
-                <button class="bp-prop-card__nav is-prev" type="button" aria-label="Mídia anterior" data-prev>‹</button>
-                <button class="bp-prop-card__nav is-next" type="button" aria-label="Próxima mídia" data-next>›</button>
-                <div class="bp-prop-card__dots" data-dots></div>
-              {% endif %}
+              {# Nav + dots — visibilidade controlada por JS #}
+                <button class="bp-prop-card__nav is-prev" type="button" aria-label="Mídia anterior" data-prev hidden>‹</button>
+                <button class="bp-prop-card__nav is-next" type="button" aria-label="Próxima mídia" data-next hidden>›</button>
+                <div class="bp-prop-card__dots" data-dots hidden></div>
 
               {% if _badge %}
                 <div class="bp-prop-card__badges" aria-hidden="true">
