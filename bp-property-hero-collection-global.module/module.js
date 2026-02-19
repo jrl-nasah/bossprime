@@ -521,7 +521,7 @@
       try {
         if (!code) return '';
         const cur = new URL(window.location.href);
-        const next = new URL(cur.origin + cur.pathname);
+        const next = new URL(cur.origin + '/imoveis/');
 
         cur.searchParams.forEach((v,k) => {
           const kk = String(k || '');

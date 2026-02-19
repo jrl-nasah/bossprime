@@ -571,7 +571,7 @@
 
                   {% if _code %}
                     <a class="bp-prop-card__cta"
-                       href="?codigo_imovel={{ _code|urlencode }}"
+                       href="/imoveis/?codigo_imovel={{ _code|urlencode }}"
                        data-cta
                        aria-label="Ver detalhes do imóvel {{ _code|escape }}">
                       Ver detalhes
@@ -593,7 +593,7 @@
 
               {% if _code %}
                 <a class="bp-prop-card__link"
-                   href="?codigo_imovel={{ _code|urlencode }}"
+                   href="/imoveis/?codigo_imovel={{ _code|urlencode }}"
                    aria-label="Ver detalhes do imóvel {{ _code|escape }}"></a>
               {% endif %}
             </div>
@@ -626,8 +626,7 @@
     {%- set _code = (it.codigo_imovel|default('') ~ '')|trim -%}
     {%- set _title = (it.title|default('') ~ '')|trim -%}
     {%- if _code and not _vis_false and not _sell_true -%}
-      {%- set __ld_path = (request.path|default(''))|trim -%}
-      {%- set __ld_url = (__ld_path ~ '?codigo_imovel=' ~ (_code|urlencode)) if __ld_path else ('?codigo_imovel=' ~ (_code|urlencode)) -%}
+      {%- set __ld_url = '/imoveis/?codigo_imovel=' ~ (_code|urlencode) -%}
       {%- set __ld_list = __ld_list + [{
         "@type": "ListItem",
         "position": loop.index,
