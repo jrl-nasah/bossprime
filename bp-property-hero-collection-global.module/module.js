@@ -1156,14 +1156,37 @@
       }
     }
 
+    function buildHsSrcset(url){
+      if (!url || !url.includes('/hs-fs/')) return null;
+      try {
+        const widths = [320, 640, 960];
+        const parts = widths.map(w => {
+          const h = Math.round(w * 9 / 16);
+          const u = new URL(url);
+          u.searchParams.set('width', String(w));
+          u.searchParams.set('height', String(h));
+          return u.toString() + ' ' + w + 'w';
+        });
+        return parts.join(', ');
+      } catch { return null; }
+    }
+
     function initCardCarousel(card){
       if (!card || card.dataset.carouselInited === '1') return;
       card.dataset.carouselInited = '1';
 
-      /* Promote data-src → src (lazy images from server-side) */
+      /* Promote data-src → src + build srcset for hs-fs images */
       card.querySelectorAll('img[data-src]').forEach(img => {
-        img.src = img.dataset.src;
+        const realSrc = img.dataset.src;
+        img.src = realSrc;
         delete img.dataset.src;
+        if (!img.getAttribute('srcset')) {
+          const ss = buildHsSrcset(realSrc);
+          if (ss) {
+            img.setAttribute('srcset', ss);
+            img.setAttribute('sizes', '(max-width: 640px) 100vw, 640px');
+          }
+        }
       });
 
       const track = card.querySelector('[data-track]');
