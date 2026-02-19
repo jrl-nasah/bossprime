@@ -376,6 +376,9 @@
       </form>
     </section>
 
+    {# placeholder 1×1 gif transparente para imgs lazy (data-src) #}
+    {% set __ph = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" %}
+
     <section class="bp-prop-cards" aria-label="Lista de imóveis">
       <div class="bp-prop-cards__grid" data-prop-grid>
         {% for it in module.items %}
@@ -391,6 +394,8 @@
 
           {# Exibe somente se visível E não vendido #}
           {% if not _vis_false and not _sell_true %}
+          {# Primeiros 8 items: eager (src). Demais: lazy (data-src + placeholder) #}
+          {% set __eager = loop.index0 < 8 %}
           {% set _code   = (it.codigo_imovel|default('') ~ '')|trim %}
           {% set _title  = (it.title|default('') ~ '')|trim %}
           {% set _city   = (it.city|default('') ~ '')|trim %}
@@ -445,22 +450,7 @@
             {% set __bed_icon = '🛌' %}
           {% endif %}
 
-          {# carrossel por card: contagem de mídias (cap 4) — loop explícito #}
-          {% set __img_items = [] %}
-          {% set __vid_items = [] %}
-          {% set __card_bulk_raw = [] %}
-          {% for g in it.gallery %}
-            {% if g.image.src %}{% set __img_items = __img_items + [g.image.src] %}{% endif %}
-            {% set __cvurl = (g.video_url|default('') ~ '')|trim %}
-            {% if __cvurl %}{% set __vid_items = __vid_items + [__cvurl] %}{% endif %}
-            {% set __crb = (g.gallery_bulk_urls|default('') ~ '')|trim %}
-            {% if __crb %}{% set __card_bulk_raw = __card_bulk_raw + (__crb|split(';')) %}{% endif %}
-          {% endfor %}
-          {% set __card_bulk = [] %}
-          {% for __cu in __card_bulk_raw %}
-            {% if (__cu ~ '')|trim %}{% set __card_bulk = __card_bulk + [(__cu ~ '')|trim] %}{% endif %}
-          {% endfor %}
-          {% set __media_total = (__img_items|length) + (__vid_items|length) + (__card_bulk|length) %}
+          {# carrossel por card (cap 4 mídias) #}
 
           <article class="bp-prop-card"
                    data-prop-card
@@ -496,7 +486,7 @@
                 {% for g in it.gallery %}
                   {% if __mc < 4 and g.image.src %}
                     <figure class="bp-prop-card__slide">
-                      <img src="{{ g.image.src }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
+                      <img {% if __eager %}src="{{ g.image.src }}"{% else %}src="{{ __ph }}" data-src="{{ g.image.src }}"{% endif %} alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
                     </figure>
                     {% set __mc = __mc + 1 %}
                   {% endif %}
@@ -526,7 +516,7 @@
                         {% set __cbu_url = (__cbu ~ '')|trim %}
                         {% if __cbu_url %}
                           <figure class="bp-prop-card__slide">
-                            <img src="{{ __cbu_url }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
+                            <img {% if __eager %}src="{{ __cbu_url }}"{% else %}src="{{ __ph }}" data-src="{{ __cbu_url }}"{% endif %} alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
                           </figure>
                           {% set __mc = __mc + 1 %}
                         {% endif %}
@@ -534,11 +524,10 @@
                     {% endfor %}
                   {% endif %}
                 {% endfor %}
-                {% if __media_total == 0 %}
+                {# Fallback "Sem foto" — CSS :only-child exibe somente quando não há slides reais #}
                   <figure class="bp-prop-card__slide is-empty">
                     <div class="bp-prop-card__ph">Sem foto</div>
                   </figure>
-                {% endif %}
               </div>
 
               {# Nav + dots — visibilidade controlada por JS #}

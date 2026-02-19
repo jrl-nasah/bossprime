@@ -1160,8 +1160,20 @@
       if (!card || card.dataset.carouselInited === '1') return;
       card.dataset.carouselInited = '1';
 
+      /* Promote data-src → src (lazy images from server-side) */
+      card.querySelectorAll('img[data-src]').forEach(img => {
+        img.src = img.dataset.src;
+        delete img.dataset.src;
+      });
+
       const track = card.querySelector('[data-track]');
       if (!track) return;
+
+      /* Remove fallback "Sem foto" se existem slides reais */
+      const emptySlide = track.querySelector('.bp-prop-card__slide.is-empty');
+      if (emptySlide && track.querySelectorAll('.bp-prop-card__slide').length > 1) {
+        emptySlide.remove();
+      }
 
       const slidesEls = Array.from(track.querySelectorAll('.bp-prop-card__slide'));
       const total = slidesEls.length;

@@ -847,6 +847,10 @@
 .bp-prop-card__slide.is-empty{
   color: #bcd;
 }
+/* Oculta fallback "Sem foto" quando existem slides reais */
+.bp-prop-card__slide.is-empty:not(:only-child){
+  display:none;
+}
 
 /* Vídeo: placeholder com ícone play */
 .bp-prop-card__slide.is-video{
