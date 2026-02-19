@@ -124,6 +124,8 @@
                         alt="{{ (g.alt|default(_title or 'Imagem do imóvel') ~ '')|trim }}"
                         loading="lazy"
                         decoding="async"
+                        width="960"
+                        height="540"
                         data-lightbox-src="{{ g.image.src }}"
                       >
                     </figure>
@@ -151,7 +153,7 @@
                       {% set __bu_url = (__bu ~ '')|trim %}
                       {% if __bu_url %}
                         <figure class="bp-prop-hero__slide" data-slide>
-                          <img src="{{ __bu_url }}" alt="{{ (g.alt|default(_title or 'Imagem do imóvel') ~ '')|trim }}" loading="lazy" decoding="async" data-lightbox-src="{{ __bu_url }}">
+                          <img src="{{ __bu_url }}" alt="{{ (g.alt|default(_title or 'Imagem do imóvel') ~ '')|trim }}" loading="lazy" decoding="async" width="960" height="540" data-lightbox-src="{{ __bu_url }}">
                         </figure>
                       {% endif %}
                     {% endfor %}
@@ -172,7 +174,7 @@
                   {% for g in it.gallery %}
                     {% if g.image.src %}
                       <button class="bp-prop-hero__thumb{% if __go == 0 %} is-active{% endif %}" type="button" data-go="{{ __go }}">
-                        <img src="{{ g.image.src }}" alt="Miniatura {{ __go + 1 }}">
+                        <img src="{{ g.image.src }}" alt="Miniatura {{ __go + 1 }}" width="120" height="68" loading="lazy">
                       </button>
                     {% endif %}
                     {% if g.image.src or g.video_url %}{% set __go = __go + 1 %}{% endif %}
@@ -183,7 +185,7 @@
                         {% set __bu_url = (__bu ~ '')|trim %}
                         {% if __bu_url %}
                           <button class="bp-prop-hero__thumb{% if __go == 0 %} is-active{% endif %}" type="button" data-go="{{ __go }}">
-                            <img src="{{ __bu_url }}" alt="Miniatura {{ __go + 1 }}">
+                            <img src="{{ __bu_url }}" alt="Miniatura {{ __go + 1 }}" width="120" height="68" loading="lazy">
                           </button>
                           {% set __go = __go + 1 %}
                         {% endif %}
@@ -494,7 +496,7 @@
                 {% for g in it.gallery %}
                   {% if __mc < 4 and g.image.src %}
                     <figure class="bp-prop-card__slide">
-                      <img src="{{ g.image.src }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
+                      <img src="{{ g.image.src }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
                     </figure>
                     {% set __mc = __mc + 1 %}
                   {% endif %}
@@ -524,7 +526,7 @@
                         {% set __cbu_url = (__cbu ~ '')|trim %}
                         {% if __cbu_url %}
                           <figure class="bp-prop-card__slide">
-                            <img src="{{ __cbu_url }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async">
+                            <img src="{{ __cbu_url }}" alt="{{ _title|default('Imóvel')|escape }}" loading="lazy" decoding="async" width="640" height="360">
                           </figure>
                           {% set __mc = __mc + 1 %}
                         {% endif %}
