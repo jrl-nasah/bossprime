@@ -1,0 +1,72 @@
+<!--
+  templateType: none
+-->
+<!doctype html>
+<html lang="{{ html_lang }}" {{ html_lang_dir }}>
+  <head>
+    <meta charset="utf-8">
+    {% if page_meta.html_title || pageTitle %}<title>{{ page_meta.html_title || pageTitle }}</title>{% endif %}
+    {% if site_settings.favicon_src %}<link rel="shortcut icon" href="{{ site_settings.favicon_src }}" />{% endif %}
+    <meta name="description" content="{{ page_meta.meta_description }}">
+
+    {# === FONTS (Identidade Boss Prime) ====================================== #}
+    {# Montserrat (Google Fonts) — apoio/corpo e UI — carregamento não-bloqueante #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+
+    {# Le Major — Títulos. Preload woff2 + @font-face #}
+    <link rel="preload" as="font" type="font/woff2" href="{{ get_asset_url('../../images/fonts/LeMajor.woff2') }}" crossorigin>
+    <style>
+      @font-face{
+        font-family: "Le Major";
+        src:
+          url("{{ get_asset_url('../../images/fonts/LeMajor.woff2') }}") format("woff2"),
+          url("{{ get_asset_url('../../images/fonts/LeMajor.woff') }}") format("woff");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+    {# ======================================================================= #}
+
+    {{ require_css(get_asset_url("../../css/main.css")) }}
+
+    {# CSS específico do template (opcional, mantém original) #}
+    {% if template_css %}
+      {{ require_css(get_asset_url(template_css)) }}
+    {% endif %}
+
+    {{ require_css(get_asset_url("../../css/theme-overrides.css")) }}
+
+    {# Padrões HubSpot #}
+    {{ standard_header_includes }}
+  </head>
+  <body>
+    <div class="body-wrapper {{ builtin_body_classes }}">
+      {% block header %}
+        {% global_partial path="../partials/header.html" %}
+      {% endblock header %}
+
+      <main id="main-content" class="body-container-wrapper">
+        {% block body %}
+        {% endblock body %}
+      </main>
+
+      {% block footer %}
+        {% global_partial path="../partials/footer.html" %}
+      {% endblock footer %}
+    </div>
+
+    {# jQuery — carregado no footer com defer para não bloquear render #}
+    {% if not site_settings.include_jquery %}
+      <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% endif %}
+
+    {{ require_js(get_asset_url("../../js/main.js")) }}
+
+    {{ standard_footer_includes }}
+  </body>
+</html>
