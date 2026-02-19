@@ -379,6 +379,31 @@
     {# placeholder 1×1 gif transparente para imgs lazy (data-src) #}
     {% set __ph = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" %}
 
+    {# Phase 4: Preload LCP — primeira imagem do primeiro card visível #}
+    {% set __lcp = [] %}
+    {% for it in module.items %}
+      {% if __lcp|length == 0 %}
+        {% set _v_raw = it.isVisible_home|default('true') %}
+        {% set _v_s   = (_v_raw ~ '')|trim|lower %}
+        {% set _v_hide = (_v_raw is boolean and (not _v_raw)) or _v_s in ['nao','não','no','false','0','off'] %}
+        {% set _s_raw = it.isInvisible_Sell|default('false') %}
+        {% set _s_s   = (_s_raw ~ '')|trim|lower %}
+        {% set _s_sold = (_s_raw is boolean and _s_raw) or _s_s in ['sim','yes','true','1','on'] %}
+        {% if not _v_hide and not _s_sold %}
+          {% for g in it.gallery %}
+            {% if __lcp|length == 0 and g.image.src %}
+              {% do __lcp.append(g.image.src) %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    {% if __lcp|length > 0 %}
+    {% require_head %}
+    <link rel="preload" as="image" href="{{ __lcp[0] }}" fetchpriority="high">
+    {% end_require_head %}
+    {% endif %}
+
     <section class="bp-prop-cards" aria-label="Lista de imóveis">
       <div class="bp-prop-cards__grid" data-prop-grid>
         {% for it in module.items %}
