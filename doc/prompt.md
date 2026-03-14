@@ -30,8 +30,9 @@ boss/
 │   ├── module.css
 │   └── module.js
 └── doc/
-    ├── prompt.md     ← este arquivo
-    └── futuro.md     ← tarefas futuras planejadas
+    ├── prompt.md           ← este arquivo
+    ├── futuro.md           ← tarefas futuras planejadas
+    └── copilot-pro-plus.md ← guia de ativação do Copilot Pro+
 ```
 
 ---
